@@ -54,6 +54,14 @@ Board revisions: the Note 7 BOOT carries several DTBs (`hw_rev` 0, 1, 2, ...,
 11+ for EUR; 1 to 12+ for KOR). S-Boot picks one by revision and
 `herolte-pack-boot.py` keeps the stock DTBH, so no choice is needed.
 
+## Installer script
+
+`sudo tools/note7-install.sh` (status, backup, flash-boot, flash-root, restore,
+logs) automates the TWRP side over adb: it checks the model, backs up BOOT and
+EFS with checksums on both ends, writes only BOOT and USERDATA after typed
+confirmations, and reads BOOT back after writing. Tested against a simulated
+phone only, not a real Note 7.
+
 ## Steps
 
 Same stages as the S7 (`docs/herolte-bringup.md`, `docs/herolte-howto.md`).
