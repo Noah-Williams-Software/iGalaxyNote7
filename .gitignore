@@ -14,3 +14,6 @@ shim/a5xelte/out4k/
 shim/a5xelte/outxnu/
 shim/herolte/out/
 *.img
+
+# installer working directory (kernel, root image, built BOOT images)
+.install/

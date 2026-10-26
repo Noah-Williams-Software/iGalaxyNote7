@@ -33,6 +33,24 @@ The kernel config stays `MACHINE_CONFIG=HEROLTE`; the Note 7 differences are
 selected at run time. Why that is enough, what differs and what is still
 unknown: **[docs/gracelte-bringup.md](docs/gracelte-bringup.md)**.
 
+## One command
+
+```sh
+git clone https://github.com/Noah-Williams-Software/iGalaxyNote7 && cd iGalaxyNote7
+git checkout claude/awesome-einstein-mit2sa      # the branch with the Note 7 layer, pushed to GitHub
+sudo ./install.sh          # phone in TWRP on USB; resumes if interrupted
+```
+
+`install.sh` installs its dependencies (asks first), logs in to GitHub, backs up
+BOOT and EFS, builds the kernel and the iOS root on GitHub's macOS runners in
+**your** account (the root in a private repo it offers to create), downloads
+both, builds the loader, device tree, payload and BOOT images locally, flashes a
+probe image and asks what the screen showed, then writes USERDATA and the XNU
+BOOT. You type `ERASE USERDATA` once, up front. `sudo ./install.sh --plan`
+shows progress. Needs about 12 GB free and a few hours of macOS runner time
+(private-repo macOS minutes are billed at 10x). **Never run on a real Note 7
+yet**: the logic was exercised against simulated `gh` and `adb` only.
+
 ## Where to start
 
 1. Read `docs/gracelte-bringup.md` (hardware comparison, steps, open questions).

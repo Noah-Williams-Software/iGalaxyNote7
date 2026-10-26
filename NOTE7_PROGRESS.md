@@ -25,6 +25,18 @@ Three kinds of entry, never mixed: **source** (derived from code or DTS),
 - **not done** No kernel compile (needs the macOS workflow), so patch 0300 is
   not compiled. No image built, no device run.
 
+## 2026-10-26 (later)
+
+- **built** `tools/note7-install.sh` (TWRP/adb side) and `install.sh` (full
+  pipeline) tested against a simulated phone (file-backed partitions, a stock
+  BOOT with a DTBH 8890 header) and a fake `gh`: dependencies, auth, backup,
+  kernel and root stages, resume, the shim built with Ubuntu's
+  `gcc-aarch64-linux-gnu` 13 (`-Werror` clean), ADT, BOOT packing, probe gate,
+  USERDATA write via `herolte-flash-root.py`, XNU BOOT write with read-back.
+  The payload packer was stubbed (it needs a real Mach-O kernel).
+- **not done** No real GitHub Actions run, no real Note 7, no real adb/TWRP.
+  The `ios-root` workflow has only ever run for the S7; macOS minutes needed.
+
 ### Next
 
 1. Run the `xnu` workflow on this repository (default `HEROLTE`) and fix any

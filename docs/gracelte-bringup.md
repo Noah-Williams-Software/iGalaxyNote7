@@ -54,6 +54,14 @@ Board revisions: the Note 7 BOOT carries several DTBs (`hw_rev` 0, 1, 2, ...,
 11+ for EUR; 1 to 12+ for KOR). S-Boot picks one by revision and
 `herolte-pack-boot.py` keeps the stock DTBH, so no choice is needed.
 
+## One-command pipeline
+
+`sudo ./install.sh` (repo root) chains everything below: dependencies, GitHub
+login, backup, the kernel and root builds on GitHub Actions, local loader /
+ADT / payload / BOOT builds, the probe stage with a prompt, then the flash. It
+resumes from `.install/state` and `--stage NAME` runs one step. Stage 1 (probe)
+still needs a human to look at the screen; everything else is unattended.
+
 ## Installer script
 
 `sudo tools/note7-install.sh` (status, backup, flash-boot, flash-root, restore,

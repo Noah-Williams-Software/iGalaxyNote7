@@ -15,10 +15,11 @@
 # Note 7 yet (see NOTE7_PROGRESS.md): start with the probe image.
 #
 # Environment: ADB (adb binary), BACKUP_DIR (default: backup/note7-<serial>, which
-# .gitignore excludes), ASSUME_YES=1 is deliberately not supported.
+# .gitignore excludes). There is no "assume yes". install.sh (the full pipeline)
+# sources this file and sets PREAUTH to the phrases the user already typed to it.
 set -euo pipefail
 
-repo=$(cd "$(dirname "$0")/.." && pwd)
+repo=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 ADB=${ADB:-adb}
 UFS=/dev/block/platform/155a0000.ufs/by-name
 owner=${SUDO_USER:-root}
@@ -33,6 +34,7 @@ command -v python3 >/dev/null || die "python3 not found"
 
 confirm() { # confirm PROMPT [PHRASE]: default phrase is "yes"
     local phrase=${2:-yes} reply
+    case ",${PREAUTH:-}," in *",$phrase,"*) echo "(confirmed earlier: $phrase)"; return 0 ;; esac
     read -r -p "$1 Type '$phrase' to continue: " reply
     [ "$reply" = "$phrase" ] || die "not confirmed, nothing written"
 }
@@ -122,9 +124,20 @@ write_boot() {
 
 reboot_prompt() {
     local reply
+    if [ -n "${PREAUTH:-}" ]; then return 0; fi # the pipeline decides when to reboot
     read -r -p "Reboot now? [y/N] " reply
     [ "$reply" = y ] && "$ADB" -s "$SERIAL" reboot
     return 0
+}
+
+# wait_recovery [SECONDS]: block until exactly one device is back in TWRP.
+wait_recovery() {
+    local n=0 limit=${1:-300}
+    while [ "$n" -lt "$limit" ]; do
+        if "$ADB" devices | awk 'NR>1 && $2=="recovery"' | grep -q .; then return 0; fi
+        sleep 2; n=$((n + 2))
+    done
+    die "phone did not come back to TWRP within ${limit}s"
 }
 
 do_flash_root() {
@@ -151,17 +164,22 @@ do_logs() {
     echo "log: $out (may contain device identifiers; keep it out of git)"
 }
 
-cmd=${1:-}
-[ -n "$cmd" ] || { sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit 1; }
-shift
-connect
-case $cmd in
-    status) ;;
-    backup) do_backup ;;
-    flash-boot) [ "$#" -eq 1 ] || die "usage: flash-boot IMAGE.img"
-        write_boot "$1"; reboot_prompt ;;
-    restore) write_boot "$BACKUP_DIR/BOOT.img"; reboot_prompt ;;
-    flash-root) do_flash_root "$@" ;;
-    logs) do_logs "$@" ;;
-    *) die "unknown command '$cmd'" ;;
-esac
+main() {
+    local cmd=${1:-}
+    [ -n "$cmd" ] || { sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit 1; }
+    shift
+    connect
+    case $cmd in
+        status) ;;
+        backup) do_backup ;;
+        flash-boot) [ "$#" -eq 1 ] || die "usage: flash-boot IMAGE.img"
+            write_boot "$1"; reboot_prompt ;;
+        restore) write_boot "$BACKUP_DIR/BOOT.img"; reboot_prompt ;;
+        flash-root) do_flash_root "$@" ;;
+        logs) do_logs "$@" ;;
+        *) die "unknown command '$cmd'" ;;
+    esac
+}
+
+# Sourced by install.sh: only the functions are wanted.
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then main "$@"; fi
