@@ -54,16 +54,15 @@ def validate_patches(verbose=False):
             if not ('--- ' in head or 'diff ' in head or 'Index:' in head):
                 errors.append(f"Patch missing standard diff header: {fname}")
 
-    # Check contiguous sequence
+    # Numbers rise strictly (duplicates are caught above). Gaps are normal: the
+    # Exynos series deliberately starts blocks at 0200 (herolte) and 0300
+    # (gracelte), and a few donor patches live in xnu/patches-pending/.
+    gaps = []
     if seen_numbers:
         sorted_nums = sorted(seen_numbers.keys())
-        expected = 1
-        for num in sorted_nums:
-            if num != expected:
-                errors.append(f"Gap in patch sequence: expected {expected:04d}, found {num:04d} ({seen_numbers[num]})")
-                expected = num + 1
-            else:
-                expected += 1
+        for prev, num in zip(sorted_nums, sorted_nums[1:]):
+            if num != prev + 1:
+                gaps.append(f"{prev:04d}->{num:04d}")
 
     if errors:
         print(red(f"[-] Patch validation failed with {len(errors)} error(s):"))
@@ -71,7 +70,9 @@ def validate_patches(verbose=False):
             print(f"    - {err}")
         return False
 
-    print(green(f"[✓] Validated {len(patch_files)} patches (0001-{len(patch_files):04d} contiguous, format OK)"))
+    print(green(f"[✓] Validated {len(patch_files)} patches (unique numbers, format OK)"))
+    if gaps:
+        print(f"    note: numbering gaps at {', '.join(gaps)}")
     return True
 
 
@@ -130,7 +131,7 @@ def main():
     ap.add_argument('-v', '--verbose', action='store_true', help='Show detailed per-file output')
     a = ap.parse_args()
 
-    print(bold("=== Running ios-sweet Repository Validation ==="))
+    print(bold("=== Running iGalaxyNote7 Repository Validation ==="))
     ok_patches = validate_patches(a.verbose)
     ok_python = validate_python_scripts(a.verbose)
     ok_shell = validate_shell_scripts(a.verbose)

@@ -1,0 +1,39 @@
+diff --git a/bsd/dev/herolte_touch.c b/bsd/dev/herolte_touch.c
+index 9ff610a..71bd0c3 100644
+--- a/bsd/dev/herolte_touch.c
++++ b/bsd/dev/herolte_touch.c
+@@ -541,6 +541,24 @@ ht_bus_init(void)
+ 	ht_wr(ht_i2c, HSI2C_INT_EN, 0);
+ }
+ 
++/*
++ * Galaxy Note 7 / Note FE (gracelte): its DTB sets samsung,reset-before-trans
++ * on this HSI2C (exynos8890-gracelte_common.dtsi, hsi2c@14E10000), so Linux
++ * resets the controller before every transfer. Boot-arg gracelte_rstxfer=1
++ * does the same here. Off by default: the S7 works without it. Not verified
++ * on a Note 7.
++ */
++static bool
++ht_reset_before_trans(void)
++{
++	static int rst = -1;
++	if (rst < 0) {
++		rst = 0;
++		PE_parse_boot_argn("gracelte_rstxfer", &rst, sizeof(rst));
++	}
++	return rst != 0;
++}
++
+ /* One message with STOP; count <= 32. */
+ static bool
+ ht_message(bool receive, uint8_t *bytes, unsigned count)
+@@ -552,6 +570,9 @@ ht_message(bool receive, uint8_t *bytes, unsigned count)
+ 	if (count == 0 || count > 32) {
+ 		return false;
+ 	}
++	if (ht_reset_before_trans()) {
++		ht_bus_init();
++	}
+ 	ht_wr(ht_i2c, HSI2C_INT_STAT, ht_rd(ht_i2c, HSI2C_INT_STAT));
+ 	ht_wr(ht_i2c, HSI2C_FIFO_CTL, 3u | (receive ? (1u << 4) : (1u << 16)));
+ 	ht_wr(ht_i2c, HSI2C_ADDR, HT_ADDR << 10);

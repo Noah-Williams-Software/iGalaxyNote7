@@ -4,7 +4,13 @@ dtb/
 recovery/
 # third-party/Apple sources fetched for reading
 research/
+*.ipsw
 shim/out/
 xnu/out/
 xnu/out-*/
 __pycache__/
+shim/a5xelte/out/
+shim/a5xelte/out4k/
+shim/a5xelte/outxnu/
+shim/herolte/out/
+*.img
